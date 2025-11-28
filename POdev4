@@ -1,0 +1,115 @@
+from abc import ABC, abstractmethod
+
+# HATA SINIFI
+class KuantumCokusuException(Exception):
+    pass
+
+# ARAYÜZ (Simülasyon - Abstract Class olarak)
+class IKritik(ABC):
+    @abstractmethod
+    def acil_durum_sogutmasi(self):
+        pass
+
+# SOYUT SINIF
+class KuantumNesnesi(ABC):
+    def __init__(self, obj_id, tehlike):
+        self.id = obj_id
+        self.tehlike_seviyesi = tehlike
+        self._stabilite = 100.0
+
+    @property
+    def stabilite(self):
+        return self._stabilite
+
+    @stabilite.setter
+    def stabilite(self, value):
+        if value > 100: self._stabilite = 100
+        elif value < 0: self._stabilite = 0
+        else: self._stabilite = value
+        
+        if self._stabilite <= 0:
+            raise KuantumCokusuException(f"Nesne ID: {self.id} patladı!")
+
+    @abstractmethod
+    def analiz_et(self):
+        pass
+
+    def durum_bilgisi(self):
+        return f"ID: {self.id} | Stabilite: {self.stabilite} | Tehlike: {self.tehlike_seviyesi}"
+
+# SOMUT SINIFLAR
+class VeriPaketi(KuantumNesnesi):
+    def __init__(self, obj_id):
+        super().__init__(obj_id, 1)
+
+    def analiz_et(self):
+        self.stabilite -= 5
+        print("Veri içeriği okundu.")
+
+class KaranlikMadde(KuantumNesnesi, IKritik):
+    def __init__(self, obj_id):
+        super().__init__(obj_id, 5)
+
+    def analiz_et(self):
+        self.stabilite -= 15
+
+    def acil_durum_sogutmasi(self):
+        self.stabilite += 50
+        print(f"{self.id} soğutuldu.")
+
+class AntiMadde(KuantumNesnesi, IKritik):
+    def __init__(self, obj_id):
+        super().__init__(obj_id, 10)
+
+    def analiz_et(self):
+        self.stabilite -= 25
+        print("Evrenin dokusu titriyor...")
+
+    def acil_durum_sogutmasi(self):
+        self.stabilite += 50
+        print(f"{self.id} soğutuldu.")
+
+# MAIN LOOP
+def main():
+    envanter = []
+    print("OMEGA SEKTÖRÜ - PYTHON AMBARI")
+    
+    while True:
+        try:
+            print("\n1. Ekle 2. Listele 3. Analiz 4. Soğut 5. Çıkış")
+            secim = input("Seçim: ")
+
+            if secim == "1":
+                tip = input("Tip (1:Veri, 2:Karanlık, 3:Anti): ")
+                oid = input("ID: ")
+                if tip == "1": envanter.append(VeriPaketi(oid))
+                elif tip == "2": envanter.append(KaranlikMadde(oid))
+                elif tip == "3": envanter.append(AntiMadde(oid))
+            
+            elif secim == "2":
+                for nesne in envanter: print(nesne.durum_bilgisi())
+
+            elif secim == "3":
+                oid = input("ID: ")
+                for nesne in envanter:
+                    if nesne.id == oid: nesne.analiz_et()
+
+            elif secim == "4":
+                oid = input("ID: ")
+                for nesne in envanter:
+                    if nesne.id == oid:
+                        # Type Checking
+                        if isinstance(nesne, IKritik):
+                            nesne.acil_durum_sogutmasi()
+                        else:
+                            print("Bu nesne soğutulamaz!")
+
+            elif secim == "5":
+                break
+
+        except KuantumCokusuException as ex:
+            print(f"\nSİSTEM ÇÖKTÜ! TAHLİYE BAŞLATILIYOR... ({ex})")
+            break
+
+if __name__ == "__main__":
+    main()
