@@ -1,0 +1,133 @@
+const readline = require('readline');
+
+// Konsol Okuma Aracı
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+const ask = (query) => new Promise((resolve) => rl.question(query, resolve));
+
+// HATA SINIFI
+class KuantumCokusuException extends Error {
+    constructor(message) { super(message); }
+}
+
+// SOYUT SINIF (Simülasyon)
+class KuantumNesnesi {
+    constructor(id, tehlike) {
+        this.id = id;
+        this.tehlikeSeviyesi = tehlike;
+        this._stabilite = 100;
+    }
+
+    get stabilite() { return this._stabilite; }
+    
+    set stabilite(value) {
+        if (value > 100) this._stabilite = 100;
+        else if (value < 0) this._stabilite = 0;
+        else this._stabilite = value;
+
+        if (this._stabilite <= 0) {
+            throw new KuantumCokusuException(`Nesne ID: ${this.id} patladı!`);
+        }
+    }
+
+    analizEt() { throw new Error("Abstract method!"); }
+    
+    durumBilgisi() {
+        return `ID: ${this.id} | Stabilite: ${this.stabilite} | Tehlike: ${this.tehlikeSeviyesi}`;
+    }
+}
+
+// SOMUT SINIFLAR
+class VeriPaketi extends KuantumNesnesi {
+    constructor(id) { super(id, 1); }
+    
+    analizEt() {
+        this.stabilite -= 5;
+        console.log("Veri içeriği okundu.");
+    }
+}
+
+class KaranlikMadde extends KuantumNesnesi {
+    constructor(id) { super(id, 5); }
+    
+    analizEt() { this.stabilite -= 15; }
+    
+    // Interface Metodu
+    acilDurumSogutmasi() {
+        this.stabilite += 50;
+        console.log(`${this.id} soğutuldu.`);
+    }
+}
+
+class AntiMadde extends KuantumNesnesi {
+    constructor(id) { super(id, 10); }
+    
+    analizEt() {
+        this.stabilite -= 25;
+        console.log("Evrenin dokusu titriyor...");
+    }
+    
+    // Interface Metodu
+    acilDurumSogutmasi() {
+        this.stabilite += 50;
+        console.log(`${this.id} soğutuldu.`);
+    }
+}
+
+// MAIN LOOP (Async kullanıyoruz çünkü JS konsol girdisi asenkrondur)
+async function main() {
+    let envanter = [];
+    console.log("OMEGA SEKTÖRÜ - JS AMBARI");
+
+    while (true) {
+        try {
+            console.log("\n1. Ekle 2. Listele 3. Analiz 4. Soğut 5. Çıkış");
+            let secim = await ask("Seçim: ");
+
+            if (secim === "1") {
+                let tip = await ask("Tip (1:Veri, 2:Karanlık, 3:Anti): ");
+                let id = await ask("ID: ");
+                if (tip === "1") envanter.push(new VeriPaketi(id));
+                else if (tip === "2") envanter.push(new KaranlikMadde(id));
+                else if (tip === "3") envanter.push(new AntiMadde(id));
+            }
+            else if (secim === "2") {
+                envanter.forEach(n => console.log(n.durumBilgisi()));
+            }
+            else if (secim === "3") {
+                let id = await ask("ID: ");
+                let nesne = envanter.find(n => n.id === id);
+                if (nesne) nesne.analizEt();
+            }
+            else if (secim === "4") {
+                let id = await ask("ID: ");
+                let nesne = envanter.find(n => n.id === id);
+                
+                // Type Checking (JS'de Interface olmadığı için metod var mı diye bakarız)
+                if (nesne && typeof nesne.acilDurumSogutmasi === 'function') {
+                    nesne.acilDurumSogutmasi();
+                } else if (nesne) {
+                    console.log("Bu nesne soğutulamaz!");
+                }
+            }
+            else if (secim === "5") {
+                rl.close();
+                break;
+            }
+
+        } catch (e) {
+            if (e instanceof KuantumCokusuException) {
+                console.log(`\nSİSTEM ÇÖKTÜ! TAHLİYE BAŞLATILIYOR... (${e.message})`);
+                rl.close();
+                break;
+            } else {
+                console.log("Hata:", e);
+            }
+        }
+    }
+}
+
+main();
