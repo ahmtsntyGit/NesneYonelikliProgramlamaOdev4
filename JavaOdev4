@@ -1,0 +1,140 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+// HATA SINIFI
+class KuantumCokusuException extends RuntimeException {
+    public KuantumCokusuException(String message) { super(message); }
+}
+
+// ARAYÜZ
+interface IKritik {
+    void acilDurumSogutmasi();
+}
+
+// SOYUT SINIF
+abstract class KuantumNesnesi {
+    protected String id;
+    protected int tehlikeSeviyesi;
+    private double stabilite;
+
+    public KuantumNesnesi(String id, int tehlike, double stabilite) {
+        this.id = id;
+        this.tehlikeSeviyesi = tehlike;
+        setStabilite(stabilite); // Setter kullanımı önemli
+    }
+
+    public double getStabilite() { return stabilite; }
+    
+    public void setStabilite(double value) {
+        if (value > 100) this.stabilite = 100;
+        else if (value < 0) this.stabilite = 0;
+        else this.stabilite = value;
+
+        if (this.stabilite <= 0) {
+            throw new KuantumCokusuException("Nesne ID: " + id + " patladı!");
+        }
+    }
+    
+    public String getId() { return id; }
+    public abstract void analizEt();
+
+    public String durumBilgisi() {
+        return "ID: " + id + " | Stabilite: " + stabilite + " | Tehlike: " + tehlikeSeviyesi;
+    }
+}
+
+// SOMUT SINIFLAR
+class VeriPaketi extends KuantumNesnesi {
+    public VeriPaketi(String id) { super(id, 1, 100); }
+    
+    @Override
+    public void analizEt() {
+        setStabilite(getStabilite() - 5);
+        System.out.println("Veri içeriği okundu.");
+    }
+}
+
+class KaranlikMadde extends KuantumNesnesi implements IKritik {
+    public KaranlikMadde(String id) { super(id, 5, 100); }
+
+    @Override
+    public void analizEt() {
+        setStabilite(getStabilite() - 15);
+    }
+    @Override
+    public void acilDurumSogutmasi() {
+        setStabilite(getStabilite() + 50);
+        System.out.println(id + " soğutuldu.");
+    }
+}
+
+class AntiMadde extends KuantumNesnesi implements IKritik {
+    public AntiMadde(String id) { super(id, 10, 100); }
+
+    @Override
+    public void analizEt() {
+        setStabilite(getStabilite() - 25);
+        System.out.println("Evrenin dokusu titriyor...");
+    }
+    @Override
+    public void acilDurumSogutmasi() {
+        setStabilite(getStabilite() + 50);
+        System.out.println(id + " soğutuldu.");
+    }
+}
+
+// MAIN CLASS
+public class Main {
+    public static void main(String[] args) {
+        ArrayList<KuantumNesnesi> envanter = new ArrayList<>();
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("OMEGA SEKTÖRÜ - JAVA AMBARI");
+
+        while (true) {
+            try {
+                System.out.println("\n1. Ekle 2. Listele 3. Analiz 4. Soğut 5. Çıkış");
+                System.out.print("Seçim: ");
+                String secim = scanner.nextLine();
+
+                if (secim.equals("1")) {
+                    System.out.print("Tip (1:Veri, 2:Karanlık, 3:Anti): ");
+                    String tip = scanner.nextLine();
+                    System.out.print("ID: ");
+                    String id = scanner.nextLine();
+                    
+                    if (tip.equals("1")) envanter.add(new VeriPaketi(id));
+                    else if (tip.equals("2")) envanter.add(new KaranlikMadde(id));
+                    else if (tip.equals("3")) envanter.add(new AntiMadde(id));
+                }
+                else if (secim.equals("2")) {
+                    for (KuantumNesnesi n : envanter) System.out.println(n.durumBilgisi());
+                }
+                else if (secim.equals("3")) {
+                    System.out.print("ID: ");
+                    String id = scanner.nextLine();
+                    for (KuantumNesnesi n : envanter) {
+                        if (n.getId().equals(id)) n.analizEt();
+                    }
+                }
+                else if (secim.equals("4")) {
+                    System.out.print("ID: ");
+                    String id = scanner.nextLine();
+                    boolean bulundu = false;
+                    for (KuantumNesnesi n : envanter) {
+                        if (n.getId().equals(id)) {
+                            bulundu = true;
+                            if (n instanceof IKritik) ((IKritik) n).acilDurumSogutmasi();
+                            else System.out.println("Bu nesne soğutulamaz!");
+                        }
+                    }
+                }
+                else if (secim.equals("5")) break;
+
+            } catch (KuantumCokusuException ex) {
+                System.out.println("\nSİSTEM ÇÖKTÜ! TAHLİYE BAŞLATILIYOR... (" + ex.getMessage() + ")");
+                break;
+            }
+        }
+        scanner.close();
+    }
+}
