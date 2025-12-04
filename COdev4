@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
 
-// ÖZEL HATA SINIFI 
+// ÖZEL HATA SINIFI 0 ın altına düşerse hata fırlat
 public class KuantumCokusuException : Exception {
     public KuantumCokusuException(string message) : base(message) { }
 }
 
-// ARAYÜZ (INTERFACE) 
+// ARAYÜZ (INTERFACE) arayüzü kullanan her sınıf AcilDurumSogutmasını kullanmak zorunda
 public interface IKritik {
     void AcilDurumSogutmasi();
 }
 
-// SOYUT SINIF 
+// SOYUT SINIF  Diğer maddelerin atasıdır
 public abstract class KuantumNesnesi {
     public string ID { get; set; }
     public int TehlikeSeviyesi { get; set; }
